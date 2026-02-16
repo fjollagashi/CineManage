@@ -1,0 +1,140 @@
+// CineManage - Cinema Management Database Schema
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String
+  firstName     String
+  lastName      String
+  role          String    @default("CUSTOMER") // ADMIN, EMPLOYEE, CUSTOMER
+  loyaltyPoints Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  bookings      Booking[]
+  reviews       Review[]
+  activityLogs  ActivityLog[]
+  paymentMethods PaymentMethod[]
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action    String
+  details   String?
+  createdAt DateTime @default(now())
+}
+
+model Movie {
+  id          String   @id @default(cuid())
+  title       String
+  genre       String
+  durationMin Int
+  rating      String   // e.g. "PG-13", "R"
+  director    String
+  actors      String   // JSON array as string or comma-separated
+  description String
+  posterUrl   String?
+  trailerUrl  String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  shows    Show[]
+  reviews  Review[]
+}
+
+model Show {
+  id         String   @id @default(cuid())
+  movieId    String
+  movie      Movie    @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  startTime  DateTime
+  endTime    DateTime
+  ticketPriceStandard Float
+  ticketPriceVip      Float
+  screenHall String   @default("Hall 1")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  bookings Booking[]
+  seats    Seat[]
+}
+
+model Seat {
+  id        String    @id @default(cuid())
+  showId    String
+  show      Show      @relation(fields: [showId], references: [id], onDelete: Cascade)
+  row       String
+  number    Int
+  seatType  String    @default("STANDARD") // STANDARD, VIP
+  isBooked  Boolean   @default(false)
+  bookingId String?
+  booking   Booking?  @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  @@unique([showId, row, number])
+}
+
+model Booking {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  showId          String
+  show            Show     @relation(fields: [showId], references: [id], onDelete: Cascade)
+  status          String   @default("PENDING") // PENDING, CONFIRMED, CANCELLED, REFUNDED
+  totalAmount     Float
+  stripePaymentId String?
+  qrCodeData      String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  seats Seat[]
+}
+
+model PaymentMethod {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stripePaymentMethodId String
+  last4         String
+  brand         String?
+  isDefault     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  movieId   String
+  movie     Movie    @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  rating    Int      // 1-5
+  comment   String?
+  isApproved Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, movieId])
+}
+
+model Promotion {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  description String?
+  discountPercent Float?
+  discountFixed   Float?
+  validFrom   DateTime
+  validUntil  DateTime
+  maxUses     Int?
+  usedCount   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}
