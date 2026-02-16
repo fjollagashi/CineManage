@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: "DM Sans", system-ui, sans-serif;
+  color-scheme: dark;
+  --bg: #0c0c0f;
+  --card: #141419;
+  --border: #2a2a32;
+  --accent: #e50914;
+  --accent-hover: #f40612;
+  --muted: #8b8b9a;
+}
+
+html, body, #root {
+  margin: 0;
+  min-height: 100vh;
+  background: #0c0c0f;
+  background-color: var(--bg);
+  color: #e4e4e7;
+}
